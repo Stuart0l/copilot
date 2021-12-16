@@ -777,6 +777,16 @@ func getLatencyPercentiles(latencies []int64, shouldTrim bool) []int64 {
 	return percentiles
 }
 
+func getLatencyAverage(latencies []int64) float64 {
+	var total int64 = 0
+
+	for _, n := range latencies {
+		total = total + n
+	}
+
+	return float64(total) / float64(len(latencies))
+}
+
 func processAndPrintThroughputs(throughputs []DataPoint) (error, string) {
 	var overallTput string = "NaN"
 	var instTput string = "NaN"
@@ -869,7 +879,7 @@ func writeLatenciesToFile(latencies []int64, latencyType string) {
 }
 
 // return the percentiles
-func writeLatenciesToFile2(latencies []int64, latencyType string) []int64 {
+func writeLatenciesToFile2(latencies []int64, latencyType string) ([]int64, float64) {
 
 	// original latencies
 	filename := fmt.Sprintf("client-%d.%slatency.orig.txt", clientId, latencyType)
@@ -887,10 +897,12 @@ func writeLatenciesToFile2(latencies []int64, latencyType string) []int64 {
 	filepath = filepath2.Join(*prefix, filename)
 	writeSliceToFile(filepath, percentiles)
 
-	return percentiles
+	average := getLatencyAverage(trimmedLatencies)
+
+	return percentiles, average
 }
 
-func writeThroughputLatency(throughput string, latencies []int64, latencyType string) error {
+func writeThroughputLatency(throughput string, latencies []int64, average float64, latencyType string) error {
 
 	if len(latencies) < 100 {
 		return nil
@@ -906,8 +918,8 @@ func writeThroughputLatency(throughput string, latencies []int64, latencyType st
 
 	defer f.Close()
 
-	text := fmt.Sprintf("%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n", throughput, latencies[0], latencies[24],
-		latencies[49], latencies[74], latencies[89], latencies[94], latencies[98], latencies[99])
+	text := fmt.Sprintf("%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%f\n", throughput, latencies[0], latencies[24],
+		latencies[49], latencies[74], latencies[89], latencies[94], latencies[98], latencies[99], average)
 	_, err = f.WriteString(text)
 
 	if err != nil {
@@ -999,8 +1011,8 @@ func writeDataToFiles() {
 	_, throughput := processAndPrintThroughputs(throughputs)
 
 	/* Output latencies */
-	percentiles := writeLatenciesToFile2(latencies, "")
-	writeThroughputLatency(throughput, percentiles, "")
+	percentiles, average := writeLatenciesToFile2(latencies, "")
+	writeThroughputLatency(throughput, percentiles, average, "")
 
 	/* Output read/write latencies */
 	// writeLatenciesToFile2(readlatencies, "read")

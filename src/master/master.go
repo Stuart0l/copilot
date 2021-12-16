@@ -100,7 +100,7 @@ func (master *Master) run() {
 				master.alive[i] = true
 			}
 		}
-		if !new_leader {
+		if true || !new_leader {  // never re-elect
 			continue
 		}
 		for i, new_master := range master.nodes {

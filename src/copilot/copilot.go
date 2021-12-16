@@ -39,7 +39,7 @@ const BEACON_FAILURE_THRESHOLD = 1
 const REPLICA_ID_NBITS = 4
 const REPLICA_ID_BITMASK = int32(1<<REPLICA_ID_NBITS - 1)
 
-const MAX_BATCH = 5000
+const MAX_BATCH = 1
 const BATCH_INTERVAL = 100 * time.Microsecond
 
 const FAST_PATH_TIMEOUT = 5 * 1e6                 // 5ms
@@ -1707,6 +1707,10 @@ func (r *Replica) handlePropose(propose *genericsmr.Propose) {
 	if batchSize > MAX_BATCH {
 		batchSize = MAX_BATCH
 	}
+
+	// if r.stat.batches%100 == 0 {
+	// 	log.Printf("batchSize %d\n", batchSize)
+	// }
 
 	if PRINT_STATS && r.stat.batches%100000 == 0 {
 		log.Printf("Replica %d: batches: %v, cmds: %v, avg. cmds/batch: %.2f, "+

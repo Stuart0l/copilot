@@ -13,13 +13,13 @@ exec="true"
 reply="true"
 durable="false"
 check="true"
-cpus=16
+cpus=2
 #prefix="/proj/cops/$USER/slowdown" # path to copilot folder
 prefix=$(pwd) # path to copilot folder
 cpuprofile=""
 verbose="true"
 numkeys=100000
-length="180" # experiment length
+length="20" # experiment length
 #length="120" # experiment length
 trim="0.25"
 writes=100      # percentage of writes
@@ -64,7 +64,7 @@ serverPort="7070"
 
 exp_uid=$(date +%s)
 if [[ "$#" -gt 4 ]]; then
-  exp_uid="${exp_uid}_$5"
+  exp_uid="$5_${exp_uid}"
 fi
 outputDir="${prefix}/experiments/${exp_uid}/"
 mkdir -p ${outputDir}
@@ -170,3 +170,9 @@ echo -e "$(cat tput.txt)\t$(awk 'BEGIN { ORS = "\t" } { print $2 }' percentilesn
 
 cd $prefix
 python scripts/tput.py $clients ${tput_interval_in_sec} ${outputDir}
+
+latavg=`python scripts/avglat.py`
+lat99=`sed -n "1p" ${outputDir}/tputlat.txt | awk '{print $100}'`
+tput=`sed -n "1p" ${outputDir}/tputlat.txt | awk '{print $1}'`
+
+echo "$exp_uid, $tput, $latavg, $lat99" >> result.csv
