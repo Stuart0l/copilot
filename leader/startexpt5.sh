@@ -13,13 +13,13 @@ exec="true"
 reply="true"
 durable="false"
 check="true"
-cpus=2
+cpus=16
 #prefix="/proj/cops/$USER/slowdown" # path to copilot folder
 prefix=$(pwd) # path to copilot folder
 cpuprofile=""
 verbose="true"
 numkeys=100000
-length="20" # experiment length
+length=$5 # experiment length
 #length="120" # experiment length
 trim="0.25"
 writes=100      # percentage of writes
@@ -63,8 +63,8 @@ masterPort="7087"
 serverPort="7070"
 
 exp_uid=$(date +%s)
-if [[ "$#" -gt 4 ]]; then
-  exp_uid="$5_${exp_uid}"
+if [[ "$#" -gt 5 ]]; then
+  exp_uid="$6_${exp_uid}"
 fi
 outputDir="${prefix}/experiments/${exp_uid}/"
 mkdir -p ${outputDir}
@@ -107,6 +107,15 @@ done
 sleep 5
 
 unset pids
+
+# Start Experiment
+for i in $(seq 2 $((n + 1))); do
+  if [ $i -eq 2 ] || [ $i -eq 6 ]; then
+    ssh -o StrictHostKeyChecking=no node-$i "\
+    sudo /sbin/tc qdisc add dev eth0 root netem delay 40ms" \
+    2>&1
+  fi
+done
 
 offset=$((n + 2))
 leftover=$((clients % cnodes))
@@ -153,6 +162,15 @@ for i in $(seq 1 $totalNodes); do
 	cd $prefix; ./killall.sh"
 done
 
+# Delete tc
+for i in $(seq 2 $((n + 1))); do
+  if [ $i -eq 2 ] || [ $i -eq 6 ]; then
+    ssh -o StrictHostKeyChecking=no node-$i "\
+    sudo /sbin/tc qdisc del dev eth0 root netem" \
+    2>&1
+  fi
+done
+
 ####################
 # put all throughput latency in one place for easy plotting
 cd ${outputDir}
@@ -175,4 +193,4 @@ latavg=`python scripts/avglat.py`
 lat99=`sed -n "1p" ${outputDir}/tputlat.txt | awk '{print $100}'`
 tput=`sed -n "1p" ${outputDir}/tputlat.txt | awk '{print $1}'`
 
-echo "$exp_uid, $tput, $latavg, $lat99" >> result.csv
+echo "$exp_uid, $tput, $latavg, $lat99" >> result5_$n.csv
