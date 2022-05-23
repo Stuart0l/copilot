@@ -39,7 +39,7 @@ const BEACON_FAILURE_THRESHOLD = 1
 const REPLICA_ID_NBITS = 4
 const REPLICA_ID_BITMASK = int32(1<<REPLICA_ID_NBITS - 1)
 
-const MAX_BATCH = 1
+const MAX_BATCH = 5000
 const BATCH_INTERVAL = 100 * time.Microsecond
 
 const FAST_PATH_TIMEOUT = 5 * 1e6                 // 5ms
