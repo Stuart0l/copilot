@@ -13,7 +13,7 @@ exec="true"
 reply="true"
 durable="false"
 check="true"
-cpus=16
+cpus=2
 #prefix="/proj/cops/$USER/slowdown" # path to copilot folder
 prefix=$(pwd) # path to copilot folder
 cpuprofile=""
@@ -99,7 +99,7 @@ done
 declare -a pids
 for i in $(seq 2 $((n + 1))); do
   ssh -o StrictHostKeyChecking=no node-$i "\
-	cd $prefix; bin/server -maddr=${masterAddr} -mport=${masterPort} -addr=node-$i -port=${serverPort} -e=$doEpaxos -copilot=$doCopilot -latentcopilot=$doLatentCopilot -exec=$exec -dreply=$reply -durable=$durable -p=$cpus -thrifty=$thrifty" \
+  cd $prefix; taskset -ac 1 bin/server -maddr=${masterAddr} -mport=${masterPort} -addr=node-$i -port=${serverPort} -e=$doEpaxos -copilot=$doCopilot -latentcopilot=$doLatentCopilot -exec=$exec -dreply=$reply -durable=$durable -p=$cpus -thrifty=$thrifty" \
     2>&1 | awk '{ print "Server-'$i': "$0 }' &
   sleep 2
 done

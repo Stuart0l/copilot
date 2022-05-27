@@ -13,7 +13,7 @@ exec="true"
 reply="true"
 durable="false"
 check="true"
-cpus=16
+cpus=2
 #prefix="/proj/cops/$USER/slowdown" # path to copilot folder
 prefix=$(pwd) # path to copilot folder
 cpuprofile=""
@@ -113,11 +113,11 @@ declare -a pids
 for i in $(seq 2 $((n + 1))); do
   if [ $i -eq 4 ] || [ $i -eq 6 ]; then
     ssh -o StrictHostKeyChecking=no node-$i "\
-    cd $prefix; cgexec -g memory:janus bin/server -maddr=${masterAddr} -mport=${masterPort} -addr=node-$i -port=${serverPort} -e=$doEpaxos -copilot=$doCopilot -latentcopilot=$doLatentCopilot -exec=$exec -dreply=$reply -durable=$durable -p=$cpus -thrifty=$thrifty" \
+    cd $prefix; cgexec -g memory:janus taskset -ac 1 bin/server -maddr=${masterAddr} -mport=${masterPort} -addr=node-$i -port=${serverPort} -e=$doEpaxos -copilot=$doCopilot -latentcopilot=$doLatentCopilot -exec=$exec -dreply=$reply -durable=$durable -p=$cpus -thrifty=$thrifty" \
       2>&1 | awk '{ print "Server-'$i': "$0 }' &
   else
     ssh -o StrictHostKeyChecking=no node-$i "\
-    cd $prefix; bin/server -maddr=${masterAddr} -mport=${masterPort} -addr=node-$i -port=${serverPort} -e=$doEpaxos -copilot=$doCopilot -latentcopilot=$doLatentCopilot -exec=$exec -dreply=$reply -durable=$durable -p=$cpus -thrifty=$thrifty" \
+    cd $prefix; taskset -ac 1 bin/server -maddr=${masterAddr} -mport=${masterPort} -addr=node-$i -port=${serverPort} -e=$doEpaxos -copilot=$doCopilot -latentcopilot=$doLatentCopilot -exec=$exec -dreply=$reply -durable=$durable -p=$cpus -thrifty=$thrifty" \
       2>&1 | awk '{ print "Server-'$i': "$0 }' &
   fi
   sleep 2
@@ -200,7 +200,8 @@ cd $prefix
 python scripts/tput.py $clients ${tput_interval_in_sec} ${outputDir}
 
 latavg=`python scripts/avglat.py`
+lat50=`sed -n "1p" ${outputDir}/tputlat.txt | awk '{print $51}'`
 lat99=`sed -n "1p" ${outputDir}/tputlat.txt | awk '{print $100}'`
 tput=`sed -n "1p" ${outputDir}/tputlat.txt | awk '{print $1}'`
 
-echo "$exp_uid, $tput, $latavg, $lat99" >> result6_$n.csv
+echo "$exp_uid, $tput, $latavg, $lat50, $lat99" >> result0_$n.csv
