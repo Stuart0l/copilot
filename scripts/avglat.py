@@ -1,4 +1,4 @@
-path_prefix = "/home/xuhao/copilot/experiments/latest/"
+path_prefix = "experiments/latest/"
 
 def calc_average_latency(filename):
 	with open(filename, 'r') as f:
