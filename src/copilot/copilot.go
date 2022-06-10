@@ -2552,6 +2552,7 @@ func (r *Replica) handlePrepareReply(preply *copilotproto.PrepareReply) {
 	}
 }
 
+// deprecated
 func (r *Replica) handlePrepareReplyWIP(preply *copilotproto.PrepareReply) {
 	inst := r.InstanceSpace[preply.Replica][preply.Instance]
 

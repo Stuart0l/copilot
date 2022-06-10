@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# cpu limitation
+
 set -x
 
 # protocol to run: "copilot", "latentcopilot", "epaxos", "multipaxos" (default)
@@ -70,7 +72,6 @@ outputDir="${prefix}/experiments/${exp_uid}/"
 mkdir -p ${outputDir}
 rm ${prefix}/experiments/latest
 ln -s $outputDir ${prefix}/experiments/latest
-echo "$outputDir" > outputdir.log
 
 echo -e "Running ${proto} at $(date)\t${exp_uid}\t${n}\t${clients}\t${cnodes}" >>${prefix}/progress
 
@@ -99,16 +100,22 @@ done
 # Start Servers
 declare -a pids
 for i in $(seq 2 $((n + 1))); do
-  ssh -o StrictHostKeyChecking=no node-$i "\
-  cd $prefix; taskset -ac 1 bin/server -maddr=${masterAddr} -mport=${masterPort} -addr=node-$i -port=${serverPort} -e=$doEpaxos -copilot=$doCopilot -latentcopilot=$doLatentCopilot -exec=$exec -dreply=$reply -durable=$durable -p=$cpus -thrifty=$thrifty" \
-    2>&1 | awk '{ print "Server-'$i': "$0 }' &
+  if [ $i -eq 4 ] || [ $i -eq 6 ]; then
+    ssh -o StrictHostKeyChecking=no node-$i "\
+    cd $prefix; taskset -ac 1 bin/server -maddr=${masterAddr} -mport=${masterPort} -addr=node-$i -port=${serverPort} -e=$doEpaxos -copilot=$doCopilot -latentcopilot=$doLatentCopilot -exec=$exec -dreply=$reply -durable=$durable -p=2 -thrifty=$thrifty" \
+      2>&1 | awk '{ print "Server-'$i': "$0 }' &
+  else
+    ssh -o StrictHostKeyChecking=no node-$i "\
+    cd $prefix; taskset -ac 1 bin/server -maddr=${masterAddr} -mport=${masterPort} -addr=node-$i -port=${serverPort} -e=$doEpaxos -copilot=$doCopilot -latentcopilot=$doLatentCopilot -exec=$exec -dreply=$reply -durable=$durable -p=$cpus -thrifty=$thrifty" \
+      2>&1 | awk '{ print "Server-'$i': "$0 }' &
+  fi
   sleep 2
 done
 
 sleep 5
 
-unset pids
 
+unset pids
 
 offset=$((n + 2))
 leftover=$((clients % cnodes))
@@ -130,7 +137,6 @@ for i in $(seq 0 $((cnodes - 1))); do
 
     # Note: to use an open-loop client, replace the line "bin/clientmain..." with the following line:
     # bin/clientol -maddr=${masterAddr} -mport=${masterPort} -q=$reqs -check=true -e=$doEpaxos -twoLeaders=$doTwoLeaders -numKeys=${numkeys} -c=$conflicts -id=$clientId -cpuprofile=${cpuprofile} -prefix=$outputDir -runtime=$length -trim=${trim} -w=$writes -proxy=$proxyReplica -p=$cpus -tput_interval_in_sec=${tput_interval_in_sec} -target_rps=${target_rps}" \
-    sleep .0$[ ( $RANDOM % 100 ) ]s
     ssh node-${nodeId} -o StrictHostKeyChecking=no "\
     cd $prefix;
     bin/clientmain -maddr=${masterAddr} -mport=${masterPort} -q=$reqs -check=true -e=$doEpaxos -twoLeaders=$doTwoLeaders -numKeys=${numkeys} -c=$conflicts -id=$clientId -cpuprofile=${cpuprofile} -prefix=$outputDir -runtime=$length -trim=${trim} -w=$writes -proxy=$proxyReplica -p=$cpus -tput_interval_in_sec=${tput_interval_in_sec}" \
@@ -148,15 +154,13 @@ sleep 5
 
 # Start Experiment
 for i in $(seq 2 $((n + 1))); do
-  if [ $i -eq 2 ] || [ $i -eq 6 ]; then
-    ssh -f -o StrictHostKeyChecking=no node-$i "\
-    sudo pkill inf; \
+  if [ $i -eq 4 ] || [ $i -eq 6 ]; then
+    ssh -o StrictHostKeyChecking=no node-$i "\
     pid=\`ss -tulpn | grep -E '*:7070' | awk '{print \$7}' | cut -f2 -d= | cut -f1 -d,\`; \
-    ~/copilot/inf & export inf=\$!; \
-    sudo mkdir /sys/fs/cgroup/cpu/cpulow /sys/fs/cgroup/cpu/cpuhigh; \
-    echo 1024 | sudo tee /sys/fs/cgroup/cpu/cpulow/cpu.shares; \
-    echo \$pid | sudo tee /sys/fs/cgroup/cpu/cpulow/cgroup.procs; \
-    echo \$inf | sudo tee /sys/fs/cgroup/cpu/cpuhigh/cgroup.procs" \
+    sudo mkdir /sys/fs/cgroup/cpu/janus; \
+    echo 50000 | sudo tee /sys/fs/cgroup/cpu/janus/cpu.cfs_quota_us; \
+    echo 1000000 | sudo tee /sys/fs/cgroup/cpu/janus/cpu.cfs_period_us; \
+    echo \$pid | sudo tee /sys/fs/cgroup/cpu/janus/cgroup.procs" \
     2>&1
   fi
 done
@@ -175,10 +179,8 @@ done
 
 # Delete cgroup
 for i in $(seq 2 $((n + 1))); do
-  if [ $i -eq 2 ] || [ $i -eq 6 ]; then
-    ssh -o StrictHostKeyChecking=no node-$i "\
-    sudo cgdelete cpu:cpuhigh cpu:cpulow; \
-    sudo pkill inf" \
+  if [ $i -eq 4 ] || [ $i -eq 6 ]; then
+    ssh -o StrictHostKeyChecking=no node-$i "sudo cgdelete cpu:janus" \
     2>&1
   fi
 done
@@ -202,8 +204,7 @@ cd $prefix
 python scripts/tput.py $clients ${tput_interval_in_sec} ${outputDir}
 
 latavg=`python scripts/avglat.py`
-lat50=`sed -n "1p" ${outputDir}/tputlat.txt | awk '{print $51}'`
 lat99=`sed -n "1p" ${outputDir}/tputlat.txt | awk '{print $100}'`
 tput=`sed -n "1p" ${outputDir}/tputlat.txt | awk '{print $1}'`
 
-echo "$exp_uid, $tput, $latavg, $lat50, $lat99" >> result0_$n.csv
+echo "$exp_uid, $tput, $latavg, $lat99" >> result1_$n.csv

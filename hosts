@@ -1,0 +1,26 @@
+127.0.0.1	localhost
+::1		localhost ip6-localhost ip6-loopback
+ff02::1		ip6-allnodes
+ff02::2		ip6-allrouters
+
+#10.0.0.37	node-0
+#10.0.0.37	node-1
+#10.0.0.13	node-2
+#10.0.0.14	node-3
+#10.0.0.15	node-4
+#10.0.0.46	node-5
+#10.0.0.4	node-6
+#10.0.0.12	node-7
+#10.0.0.16	node-8
+
+10.0.0.37	node-0
+10.0.0.37	node-1
+10.0.0.13	node-2
+10.0.0.14	node-3
+10.0.0.15	node-4
+10.0.0.55	node-5
+10.0.0.58	node-6
+10.0.0.46	node-7
+10.0.0.4	node-8
+10.0.0.12	node-9
+10.0.0.16	node-10

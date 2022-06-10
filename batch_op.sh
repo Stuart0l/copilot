@@ -11,6 +11,16 @@ n7=$( cat ./ips/node-7 )
 n8=$( cat ./ips/node-8 )
 
 servers=(
+  #"10.0.0.37"
+  #"10.0.0.13"
+  #"10.0.0.14"
+  #"10.0.0.15"
+  #"10.0.0.55"
+  #"10.0.0.58"
+  #"10.0.0.46"
+  #"10.0.0.4"
+  #"10.0.0.12"
+  #"10.0.0.16"
   $n2
   $n3
   $n4
@@ -32,6 +42,8 @@ if [ $1 == 'init' ]; then
 	:
 elif [ $1 == 'dep' ]; then
 	eval $cmd2
+elif [ $1 == 'disk' ]; then
+	:
 elif [ $1 == 'kill' ]; then
 	echo "kill locally"
 	eval $cmd4
@@ -46,7 +58,7 @@ fi
 # sync to others
 cmd1="sudo mount -o v4 $n0:/home/xuhao/copilot copilot"
 cmd2="cd $workdir/$repos ; sudo bash dep.sh"
-cmd3=""
+cmd3="cd $workdir/$repos ; sudo bash init.sh "
 cmd4="cd $workdir/$repos ; sudo bash killall.sh"
 cmd5=""
 cmd6=""
@@ -59,6 +71,9 @@ do
   elif [ $1 == 'dep' ]; then
     echo "scp to $host cmd: $cmd2"
     ssh $host "$cmd2" &
+  elif [ $1 == 'disk' ]; then
+    echo "init disk to $host cmd: $cmd3"
+    ssh $host "$cmd3" &
 elif [ $1 == 'kill' ]; then
     echo "kill depfast $host cmd: $cmd4"
     ssh $host "$cmd4"

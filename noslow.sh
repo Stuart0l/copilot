@@ -13,7 +13,8 @@ do
 		do
 			name=copilot_"$replica"r_"$c"c_trail$i
 			echo "Running experiment $name"
-			./startexpt$e.sh copilot $replica $c 1 20 $name
+			echo "./startexpt$e.sh copilot $replica $c 1 20 $name"
+			#./startexpt$e.sh copilot $replica $c 1 20 $name
 		done
 	done
 done

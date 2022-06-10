@@ -70,6 +70,7 @@ outputDir="${prefix}/experiments/${exp_uid}/"
 mkdir -p ${outputDir}
 rm ${prefix}/experiments/latest
 ln -s $outputDir ${prefix}/experiments/latest
+echo "$outputDir" > outputdir.log
 
 echo -e "Running ${proto} at $(date)\t${exp_uid}\t${n}\t${clients}\t${cnodes}" >>${prefix}/progress
 
@@ -129,6 +130,7 @@ for i in $(seq 0 $((cnodes - 1))); do
 
     # Note: to use an open-loop client, replace the line "bin/clientmain..." with the following line:
     # bin/clientol -maddr=${masterAddr} -mport=${masterPort} -q=$reqs -check=true -e=$doEpaxos -twoLeaders=$doTwoLeaders -numKeys=${numkeys} -c=$conflicts -id=$clientId -cpuprofile=${cpuprofile} -prefix=$outputDir -runtime=$length -trim=${trim} -w=$writes -proxy=$proxyReplica -p=$cpus -tput_interval_in_sec=${tput_interval_in_sec} -target_rps=${target_rps}" \
+    sleep .0$[ ( $RANDOM % 100 ) ]s
     ssh node-${nodeId} -o StrictHostKeyChecking=no "\
     cd $prefix;
     bin/clientmain -maddr=${masterAddr} -mport=${masterPort} -q=$reqs -check=true -e=$doEpaxos -twoLeaders=$doTwoLeaders -numKeys=${numkeys} -c=$conflicts -id=$clientId -cpuprofile=${cpuprofile} -prefix=$outputDir -runtime=$length -trim=${trim} -w=$writes -proxy=$proxyReplica -p=$cpus -tput_interval_in_sec=${tput_interval_in_sec}" \

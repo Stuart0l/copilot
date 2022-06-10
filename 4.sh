@@ -1,0 +1,1 @@
+cd /home/xuhao/copilot; taskset -ac 1 bin/server -maddr=node-1 -mport=7087 -addr=node-4 -port=7070 -e=false -copilot=true -latentcopilot=false -exec=true -dreply=true -durable=false -p=2 -thrifty=false
